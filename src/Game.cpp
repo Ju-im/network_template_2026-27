@@ -18,7 +18,49 @@ bool Game::init()
     board = std::make_shared<Board>(window);
     board->init();   
    
-    audio_stream.init();
+   // audio_stream.init();
+    recorder.start();
+
+    sf::sleep(sf::seconds(2));
+   
+    recorder.stop();
+
+    
+  
+    std::vector<std::int16_t*> samples = recorder.outgoing_queue.front();
+    //std::vector<std::int16_t*> samples;
+    
+    sf::SoundBuffer buffer;
+    std::vector<std::int16_t> flatSample;
+  
+   
+        unsigned int sampleCountPerPtr = recorder.getSampleRate() * recorder.getChannelCount() * 2;
+        for (int i = 0; i < samples.size(); i++) {
+            flatSample.insert(flatSample.end(), samples[i], samples[i] + recorder.m_sampleCount[i]);
+
+        }
+       
+    
+        
+
+        buffer.loadFromSamples(flatSample.data(), flatSample.size(), recorder.getChannelCount(), 44100, recorder.getChannelMap());
+            std::cout << "Duration: " << buffer.getDuration().asSeconds() << std::endl;
+            sf::Sound sound(buffer);
+            
+           // sound.setLooping(true);
+            std::cout <<"Attenuation: " << sound.getAttenuation() << std::endl;
+            std::cout <<"Volume: " << sound.getVolume() << std::endl;
+            std::cout << "Pitch: " << sound.getPitch() << std::endl;
+            sound.play();
+            while (sound.getStatus() == sf::Sound::Status::Playing) {
+                std::cout <<"Time offset: " << sound.getPlayingOffset().asSeconds() << std::endl;
+                sf::sleep(sf::milliseconds(100));
+               
+            }
+        
+     
+    
+    
     host_text.setString("Host Game");
     host_text.setCharacterSize(50);
     host_text.setPosition({ 900.f,300.f });

@@ -25,7 +25,7 @@ int AudioStream::init()
 	sample_rate = recorder.getSampleRate();
 	channel = recorder.getChannelCount();
 	
-	std::cout << "Sample rate: " << sample_rate << "Channel(s): " << channel << "Default Device(0): "<< recorder.getDefaultDevice() << std::endl;
+	std::cout << "Sample rate: " << sample_rate << "Channel(s): " << channel << " Default Device(0): "<< recorder.getDefaultDevice() << std::endl;
 	
 	return 0;
 }

@@ -6,6 +6,7 @@
 #include "Server.h"
 #include "Client.h"
 #include"AudioStream.h"
+#include "AudioStreamRecorder.h"
 
 
 class Game
@@ -41,5 +42,7 @@ class Game
 	std::thread server_thread;
 	std::thread client_thread;
 	AudioStream audio_stream;
+	AudioStreamRecorder recorder;
+	sf::SoundBuffer buffer;
 };
 
