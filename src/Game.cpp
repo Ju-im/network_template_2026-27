@@ -21,7 +21,7 @@ bool Game::init()
    // audio_stream.init();
     recorder.start();
 
-    sf::sleep(sf::seconds(2));
+    sf::sleep(sf::seconds(5));
    
     recorder.stop();
 
@@ -43,7 +43,7 @@ bool Game::init()
     
         
 
-        buffer.loadFromSamples(flatSample.data(), flatSample.size(), recorder.getChannelCount(), 44100, recorder.getChannelMap());
+        buffer.loadFromSamples(recorder.flat_samples.data(), recorder.flat_samples.size(), recorder.getChannelCount(), 44100, recorder.getChannelMap());
             std::cout << "Duration: " << buffer.getDuration().asSeconds() << std::endl;
             sf::Sound sound(buffer);
             
