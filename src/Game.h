@@ -7,7 +7,8 @@
 #include "Client.h"
 #include"AudioStream.h"
 #include "AudioStreamRecorder.h"
-
+#include "AudioServer.h"
+#include "AudioClient.h"
 
 class Game
 {
@@ -36,6 +37,7 @@ class Game
 	sf::Font font{ "../Data/Fonts/OpenSans-Bold.ttf" };
 	sf::Text host_text{ font };
 	sf::Text join_text{ font };
+	sf::Text send_text{ font };
 	std::shared_ptr<Board> board;
 	std::unique_ptr<Server> server;
 	std::unique_ptr<Client> client;
@@ -44,5 +46,7 @@ class Game
 	AudioStream audio_stream;
 	AudioStreamRecorder recorder;
 	sf::SoundBuffer buffer;
+	std::unique_ptr<AudioClient> ac;
+	std::unique_ptr<AudioServer> as;
 };
 

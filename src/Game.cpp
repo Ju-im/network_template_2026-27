@@ -21,7 +21,7 @@ bool Game::init()
    // audio_stream.init();
     recorder.start();
 
-    sf::sleep(sf::seconds(5));
+    sf::sleep(sf::seconds(1));
    
     recorder.stop();
 
@@ -30,27 +30,23 @@ bool Game::init()
     std::vector<std::int16_t*> samples = recorder.outgoing_queue.front();
     //std::vector<std::int16_t*> samples;
     
-    sf::SoundBuffer buffer;
+    sf::SoundBuffer m_buffer;
     std::vector<std::int16_t> flatSample;
   
    
-        unsigned int sampleCountPerPtr = recorder.getSampleRate() * recorder.getChannelCount() * 2;
-        for (int i = 0; i < samples.size(); i++) {
-            flatSample.insert(flatSample.end(), samples[i], samples[i] + recorder.m_sampleCount[i]);
-
-        }
+       
        
     
         
 
-        buffer.loadFromSamples(recorder.flat_samples.data(), recorder.flat_samples.size(), recorder.getChannelCount(), 44100, recorder.getChannelMap());
-            std::cout << "Duration: " << buffer.getDuration().asSeconds() << std::endl;
+        m_buffer.loadFromSamples(recorder.flat_samples.data(), recorder.flat_samples.size(), recorder.getChannelCount(), 44100, recorder.getChannelMap());
+            std::cout << "Duration: " << m_buffer.getDuration().asSeconds() << std::endl;
+            buffer = m_buffer;
             sf::Sound sound(buffer);
             
+        
            // sound.setLooping(true);
-            std::cout <<"Attenuation: " << sound.getAttenuation() << std::endl;
-            std::cout <<"Volume: " << sound.getVolume() << std::endl;
-            std::cout << "Pitch: " << sound.getPitch() << std::endl;
+     
             sound.play();
             while (sound.getStatus() == sf::Sound::Status::Playing) {
                 std::cout <<"Time offset: " << sound.getPlayingOffset().asSeconds() << std::endl;
@@ -70,6 +66,10 @@ bool Game::init()
     join_text.setString("Join Game");
     join_text.setCharacterSize(50);
     join_text.setPosition({ 900.f,400.f });
+
+    send_text.setString("Send");
+    send_text.setCharacterSize(50);
+    send_text.setPosition({ 900.f,500.f });
     return true;
 }
 
@@ -83,6 +83,7 @@ void Game::render()
     window.draw(host_text);
     window.draw(join_text);
     board->render();    
+    window.draw(send_text);
 }
 
 void Game::mouseButtonPressed(const sf::Event::MouseButtonPressed* event)
@@ -95,28 +96,46 @@ void Game::mouseButtonPressed(const sf::Event::MouseButtonPressed* event)
         {
             gs = PLAY;
             std::cout << "Creating server" << std::endl;
-            server = std::make_unique<Server>();
+           /* server = std::make_unique<Server>();
             
             //
             //std::thread input_thread([&] {server; });
             server->init();
            
             server_thread = std::thread([&] { server->run(); });
+            server_thread.detach();*/
+            as = std::make_unique<AudioServer>();
+            as->init(recorder.flat_samples);
+          
+            server_thread = std::thread([&] {   as->input(); });
             server_thread.detach();
+            
+          
         }
         else if (join_text.getGlobalBounds().contains(mousePos)) {
             gs = PLAY;
             std::cout << "Attempting to connect to Server" << std::endl;
-            client = std::make_unique<Client>();
+           /* client = std::make_unique<Client>();
             client->connect();
             client_thread = std::thread([&] { client->run(); });
           
-            client_thread.detach();
-            
+            client_thread.detach();*/
+            ac = std::make_unique<AudioClient>();
+            ac->connect();
            
+            
+            client_thread = std::thread([&] { ac->run(); });
+            client_thread.detach();
+            sf::SoundBuffer buffer;
+            buffer.loadFromSamples(ac->data.data(), ac->data.size(), recorder.getChannelCount(), 44100, recorder.getChannelMap());
+            sf::Sound sound (buffer);
 
+
+        
         }
+      
    }
+   
    
     board->mouseButtonPressed(event);
 }
