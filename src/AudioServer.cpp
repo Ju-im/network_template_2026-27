@@ -47,10 +47,10 @@ void AudioServer::input() {
 		for (std::int16_t num : half_data) {
 			packet << num;
 		}
-		if (u_socket.send(packet, sf::IpAddress::Broadcast, 53001) != sf::Socket::Status::Done)
+		if (u_socket.send(half_data.data(), half_data.size(), sf::IpAddress::Broadcast, 53001) != sf::Socket::Status::Done)
 		{
 			// error...
-			std::cout << "Sent the data" << std::endl;
+			
 			
 			
 
@@ -58,7 +58,7 @@ void AudioServer::input() {
 		else {
 			
 			//std::cout << "Couldnt send" << std::endl;
-			
+			std::cout << "Sent the data" << std::endl;
 		}
 	}
 	

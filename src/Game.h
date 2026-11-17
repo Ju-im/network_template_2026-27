@@ -32,12 +32,14 @@ class Game
 
 	};
 	GameState gs = MENU;
+	std::array<std::int16_t, 100> data;
  private:
 	sf::RenderWindow& window;
 	sf::Font font{ "../Data/Fonts/OpenSans-Bold.ttf" };
 	sf::Text host_text{ font };
 	sf::Text join_text{ font };
 	sf::Text send_text{ font };
+	
 	std::shared_ptr<Board> board;
 	std::unique_ptr<Server> server;
 	std::unique_ptr<Client> client;

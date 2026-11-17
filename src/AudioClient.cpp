@@ -14,7 +14,7 @@ void AudioClient::connect() {
 	//socket.setBlocking(false);
 }
 
-void AudioClient::run() {
+void AudioClient::run(std::array<std::int16_t, 100>& game) {
 	
 	std::size_t received;
 	unsigned short r_port;
@@ -22,22 +22,15 @@ void AudioClient::run() {
 	sf::Packet packet;
 	
 	while (running) {
-		if (socket->receive(packet,sender, r_port) != sf::Socket::Status::Done)
+		if (socket->receive(game.data(), game.size(),received,sender ,r_port) != sf::Socket::Status::Done)
 		{
 			// error...
 			
 			std::cerr << "Error" << std::endl;
 			
 		}
-		for (int i = 0; i < 100;i++) {
-			std::int16_t num;
-			packet >> num;
-			data[i] = num;
-			std::cout << data[i] << std::endl;
-
-		}
 		running = false;
-		std::cout<< " bytes from " << sender.value().toString() << " on port " << r_port << std::endl;
+		std::cout<< " bytes from " << sender.value().toString() << " on port " << r_port << "Recieved: " << received<<std::endl;
 		
 	
 	}
