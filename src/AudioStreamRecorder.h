@@ -14,7 +14,7 @@ public:
 	std::vector<std::size_t> m_sampleCount;
 	std::vector<std::int16_t>flat_samples;
 	bool push_to_talk = true;
-
+	std::vector<std::int16_t> buffer;
 	std::queue<std::vector<std::int16_t*>> outgoing_queue;
 
 
