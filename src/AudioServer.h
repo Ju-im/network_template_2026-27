@@ -14,17 +14,25 @@ public:
 
 	void listen(sf::TcpSocket& u_socket);
 	void relay(std::string buffer, sf::TcpSocket& u_socket);
-	void send(std::int16_t* sound, sf::TcpSocket& u_socket);
+	
 
 	void input();
-	std::array<std::int16_t, 100> half_data;
-
+	bool onGetData(int samplesToStream);
+	void rCheck();
+	std::size_t m_current_sample{};
+	std::vector<std::int16_t> samples;
 	private:
-		sf::Packet packet;
+		sf::UdpSocket check_socket;
 		sf::UdpSocket u_socket;
 	std::vector<std::thread> workers;
 	std::vector<std::unique_ptr<sf::UdpSocket>>connecetions;
-	
+	struct Chunk
+	{
+		const std::int16_t* samples{};     //!< Pointer to the audio samples
+		std::size_t         sampleCount{};//!< Number of samples pointed by Samples
+		std::vector<std::int16_t> chunk_frame;
+	};
+	Chunk data;
 	std::unique_ptr<sf::TcpListener> listener;
 	int port = 53000;
 	bool running = true;

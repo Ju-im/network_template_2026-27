@@ -123,12 +123,18 @@ void Game::mouseButtonPressed(const sf::Event::MouseButtonPressed* event)
             ac = std::make_unique<AudioClient>();
             ac->connect();
            
-            
-            client_thread = std::thread([&] { ac->run(data); });
+            std::promise<std::array<std::int16_t, 100>> prms;
+            std::future<std::array<std::int16_t,100>> ftr = prms.get_future();
+            client_thread = std::thread([&] { ac->run(std::move(prms), data); });
             client_thread.detach();
-            std::array<std::int16_t,100>
+          
             sf::SoundBuffer sound_buffer;
-            sound_buffer.loadFromSamples(data.data(), data.size(), recorder.getChannelCount(), 44100, recorder.getChannelMap());
+            std::array<std::int16_t, 100> d = ftr.get();
+            std::cout << "Does";
+            samples_to_play.insert(samples_to_play.end(), d.begin(), d.end());
+            
+         
+            sound_buffer.loadFromSamples(d.data(), d.size(), recorder.getChannelCount(), 44100, recorder.getChannelMap());
             sf::Sound sound (sound_buffer);
             sound.play();
             std::cout << "Duration: " << sound_buffer.getDuration().asSeconds() << std::endl;
@@ -166,10 +172,6 @@ void Game::mouseMoved(const sf::Event::MouseMoved* event)
 {
     board->mouseMoved(event);
 }
-
-
-
-
 
 
 

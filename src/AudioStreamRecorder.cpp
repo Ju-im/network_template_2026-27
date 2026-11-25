@@ -29,7 +29,7 @@ bool AudioStreamRecorder::onProcessSamples(const std::int16_t* samples, std::siz
    // std::vector< std::int16_t*, std::allocator<std::int16_t*>> temp = { { cast,alloc } };
     //need a buffer 44.1kh samples per second == 44.1k samples
     // we need 4kh samples per 0.03 seconds== 1323 samples 
-    buffer.insert
+   
     flat_samples.insert(flat_samples.end(), samples, samples + sampleCount);
     m_samples.push_back(cast);
     m_sampleCount.push_back(sampleCount);

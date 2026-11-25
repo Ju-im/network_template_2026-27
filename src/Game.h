@@ -9,6 +9,7 @@
 #include "AudioStreamRecorder.h"
 #include "AudioServer.h"
 #include "AudioClient.h"
+#include <future>
 
 class Game
 {
@@ -32,7 +33,7 @@ class Game
 
 	};
 	GameState gs = MENU;
-	std::array<std::int16_t, 100> data;
+	std::array<std::int16_t,100> data;
  private:
 	sf::RenderWindow& window;
 	sf::Font font{ "../Data/Fonts/OpenSans-Bold.ttf" };
@@ -50,5 +51,6 @@ class Game
 	sf::SoundBuffer buffer;
 	std::unique_ptr<AudioClient> ac;
 	std::unique_ptr<AudioServer> as;
+	std::vector<std::int16_t> samples_to_play;
 };
 
