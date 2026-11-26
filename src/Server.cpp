@@ -18,11 +18,11 @@ void Server::init() {
 
 
 
-void Server::run(){
+void Server::run(bool &connected){
 	std::thread input_thread([&] {input(); });
 	input_thread.detach();
 	while (running) {
-
+		std::cout << "Status: " << connected << std::endl;
 		sf::TcpSocket& c_sock = *connecetions.emplace_back(std::make_unique<sf::TcpSocket>());
 		if (listener->accept(c_sock) != sf::Socket::Status::Done) {
 			connecetions.pop_back();
@@ -30,6 +30,7 @@ void Server::run(){
 			continue;
 		}
 	std::cout << "Client connected @ " << c_sock.getRemotePort() << std::endl;
+	connected = true;
 
 	workers.emplace_back([&] {
 		listen(c_sock);

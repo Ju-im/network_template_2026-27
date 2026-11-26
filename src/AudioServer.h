@@ -10,7 +10,7 @@ class AudioServer
 {
 public:
 	void init(std::vector<std::int16_t>& data);
-	void run(const std::int16_t sound);
+	void run();
 
 	void listen(sf::TcpSocket& u_socket);
 	void relay(std::string buffer, sf::TcpSocket& u_socket);
@@ -18,7 +18,7 @@ public:
 
 	void input();
 	bool onGetData(int samplesToStream);
-	void rCheck();
+	char rCheck();
 	std::size_t m_current_sample{};
 	std::vector<std::int16_t> samples;
 	private:

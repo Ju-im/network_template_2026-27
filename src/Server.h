@@ -10,7 +10,7 @@ class Server
 {
 public:
 	void init();
-	void run();
+	void run(bool &connected);
 	void listen(sf::TcpSocket& c_socket);
 	void relay(std::string buffer, sf::TcpSocket& c_socket);
 	void send(std::string buffer, sf::TcpSocket& c_socket);

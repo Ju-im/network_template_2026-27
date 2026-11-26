@@ -37,22 +37,16 @@ bool Game::init()
        
        
     
-        
-
-        m_buffer.loadFromSamples(recorder.flat_samples.data(), recorder.flat_samples.size(), recorder.getChannelCount(), 44100, recorder.getChannelMap());
-            std::cout << "Duration: " << m_buffer.getDuration().asSeconds() << std::endl;
-            buffer = m_buffer;
-            sf::Sound sound(buffer);
+    std::cout << "Initial size: " << recorder.flat_samples.size() << std::endl;
+    m_buffer.loadFromSamples(recorder.flat_samples.data(), recorder.flat_samples.size(), recorder.getChannelCount(), 44100, recorder.getChannelMap());
+    std::cout << "Duration: " << m_buffer.getDuration().asSeconds() << std::endl;
+    buffer = m_buffer;
+     sf::Sound sound(buffer);
             
         
            // sound.setLooping(true);
      
-            sound.play();
-            while (sound.getStatus() == sf::Sound::Status::Playing) {
-                std::cout <<"Time offset: " << sound.getPlayingOffset().asSeconds() << std::endl;
-                sf::sleep(sf::milliseconds(100));
-               
-            }
+          
         
      
     
@@ -75,7 +69,15 @@ bool Game::init()
 
 void Game::update(float dt)
 {
+    if (connected && !as_started) {
+        as = std::make_unique<AudioServer>();
+        as->init(recorder.flat_samples);
 
+        server_thread = std::thread([&] {   as->input(); });
+        server_thread.detach();
+        as_started = true;
+
+    }
 }
 
 void Game::render()
@@ -96,53 +98,43 @@ void Game::mouseButtonPressed(const sf::Event::MouseButtonPressed* event)
         {
             gs = PLAY;
             std::cout << "Creating server" << std::endl;
-           /* server = std::make_unique<Server>();
+            server = std::make_unique<Server>();
             
             //
             //std::thread input_thread([&] {server; });
             server->init();
            
-            server_thread = std::thread([&] { server->run(); });
-            server_thread.detach();*/
-            as = std::make_unique<AudioServer>();
-            as->init(recorder.flat_samples);
-          
-            server_thread = std::thread([&] {   as->input(); });
-            server_thread.detach();
+            tcp_server_thread = std::thread([&] { server->run(connected); });
+            tcp_server_thread.detach();
+           
             
           
         }
         else if (join_text.getGlobalBounds().contains(mousePos)) {
             gs = PLAY;
+           
+     
             std::cout << "Attempting to connect to Server" << std::endl;
-           /* client = std::make_unique<Client>();
+            client = std::make_unique<Client>();
             client->connect();
-            client_thread = std::thread([&] { client->run(); });
+           
+            tcp_client_thread = std::thread([&] { client->run(); });
           
-            client_thread.detach();*/
+            tcp_client_thread.detach();
+
+
             ac = std::make_unique<AudioClient>();
             ac->connect();
+            ac->size = recorder.flat_samples.size();
            
-            std::promise<std::array<std::int16_t, 100>> prms;
-            std::future<std::array<std::int16_t,100>> ftr = prms.get_future();
-            client_thread = std::thread([&] { ac->run(std::move(prms), data); });
+        
+            client_thread = std::thread([&] { ac->run(); });
             client_thread.detach();
-          
-            sf::SoundBuffer sound_buffer;
-            std::array<std::int16_t, 100> d = ftr.get();
-            std::cout << "Does";
-            samples_to_play.insert(samples_to_play.end(), d.begin(), d.end());
-            
-         
-            sound_buffer.loadFromSamples(d.data(), d.size(), recorder.getChannelCount(), 44100, recorder.getChannelMap());
-            sf::Sound sound (sound_buffer);
-            sound.play();
-            std::cout << "Duration: " << sound_buffer.getDuration().asSeconds() << std::endl;
-            while (sound.getStatus() == sf::Sound::Status::Playing) {
-                sf::sleep(sf::milliseconds(100));
-                std::cout << sound.getPlayingOffset().asSeconds() << std::endl;
-            }
+      
 
+
+          
+          
         
         }
       

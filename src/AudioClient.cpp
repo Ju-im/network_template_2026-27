@@ -28,55 +28,75 @@ void AudioClient::connect() {
 }
 
 
-//void modifyMessage(std::promise<std::string>&& prms, std::string message)
-//{
-//	std::this_thread::sleep_for(std::chrono::milliseconds(4000)); // simulate work
-//	std::string modifiedMessage = message + " has been modified";
-//	prms.set_value(modifiedMessage);
-//}
-void AudioClient::run(std::promise<std::array<std::int16_t,100>>&&prms, std::array<std::int16_t, 100>& game) {
+
+void AudioClient::run() {
 	
 	
 	
-	
-	
-		
-		if (socket->receive(game.data(), game.size(),received,sender ,r_port) != sf::Socket::Status::Done)
+	std::cout << "In Client running state" << std::endl;
+	std::array<std::int16_t, 100> buffer;
+
+	while(running){
+		if (socket->receive(buffer.data(), buffer.size(), received, sender, r_port) != sf::Socket::Status::Done)
 		{
 			// error...
-			
-			std::cerr << "Error" << std::endl;
+
+
 			recieved = false;
-		
-			
+
+
 			
 		}
 		else {
 			std::cout << " bytes from " << sender.value().toString() << " on port " << r_port << "Recieved: " << received << std::endl;
 			recieved = true;
 
-			prms.set_value(game);
+
+			samples.insert(samples.end(), buffer.begin(), buffer.end());
+			std::cout << "Current sample size: " << samples.size();
 			//sendCheck();
+			play();
 		}
+	}
+		
 
 
 
 }
+void AudioClient::play() {
+
+	if (samples.size() >= size*0.8 && !played) {
+		sf::SoundBuffer buffer;
+		buffer.loadFromSamples(samples.data(), samples.size(), 2, 44100, recorder.getChannelMap());
+		sf::Sound sound(buffer);
+		sound.play();
+
+		while (sound.getStatus() == sf::Sound::Status::Playing) {
+			std::cout << "Time offset: " << sound.getPlayingOffset().asSeconds() << std::endl;
+			sf::sleep(sf::milliseconds(100));
+
+		}
+		played = true;
+
+	}
+	else {
+		std::cout << "Not big enough" << std::endl;
+	}
+}
 
 
 void AudioClient::sendCheck() {
-	/*if (!sender.has_value() || r_port) {
-		return;
-	}*/
+	
 	std::string str;
 	sf::IpAddress receiver(sender.value());
-	if (recieved) {
-		str = 'y';
-		socket->send(reinterpret_cast<char*>(str.data()), str.length(), sf::IpAddress::Broadcast, 53003);
-	}
-	else {
-		str = 'n';
-		socket->send(reinterpret_cast<char*>(str.data()), str.length(), sf::IpAddress::Broadcast, 53003);
-	}
+	
+		if (recieved) {
+			str = 'y';
+			std::cout << "Sending Check and we did recieve it " << std::endl;
+			check_socket->send(reinterpret_cast<char*>(str.data()), str.length(), sf::IpAddress::Broadcast, 53003);
+		}
+	
+	
+	
 
 }

@@ -2,7 +2,6 @@
 
 void AudioServer::init(std::vector<std::int16_t>& m_data) {
 
-
 	if (u_socket.bind(53000) != sf::Socket::Status::Done) {
 		std::cout << "Error";
 	}
@@ -31,9 +30,18 @@ void AudioServer::init(std::vector<std::int16_t>& m_data) {
 
 }
 
+void AudioServer::run() {
 
+	char result = rCheck();
+	if (result == 'y') {
+		std::cout << "Finished" << std::endl;
+	}
+}
 void AudioServer::input() {
-	int i = 0;
+	
+	/*std::thread run_thread([this] {run(); });
+	run_thread.detach();*/
+	std::cout << "In running" << std::endl;
 	while(running){
 		std::vector<std::int16_t> half_data;
 		std::lock_guard<std::mutex>lck(mutex);
@@ -57,12 +65,16 @@ void AudioServer::input() {
 			//std::cout << "Couldnt send" << std::endl;
 			std::cout << "Sent the data" << std::endl;
 			//data.samples = {};
-			rCheck();
+			running = false;
+			
+
 
 		}
+		running = true;
+		data.chunk_frame.clear();
 	}
 	
-
+	
 }
 
 bool AudioServer::onGetData(int samplesToStream)
@@ -71,6 +83,7 @@ bool AudioServer::onGetData(int samplesToStream)
 
 	if (m_current_sample + samplesToStream <= samples.size())
 	{
+		std::cout << "End not reached yet" << std::endl;
 		// end not reached: stream the samples and continue
 		for (int i = 0; i < samplesToStream;i++) {
 			std::int16_t d =samples[m_current_sample];
@@ -85,6 +98,7 @@ bool AudioServer::onGetData(int samplesToStream)
 	}
 	else
 	{
+		std::cout << "End has been reached" << std::endl;
 		data.sampleCount = samples.size() - m_current_sample;
 		m_current_sample = samples.size();
 		for (int i = 0; i < data.sampleCount; i++) {
@@ -109,29 +123,38 @@ bool AudioServer::onGetData(int samplesToStream)
 
 
 		}
+
+		/*std::thread check_thread([this] {rCheck(); });
+		check_thread.detach();*/
 		
 		return false;
 	}
 }
 
 
-void AudioServer::rCheck() {
+char AudioServer::rCheck() {
 	char str[1];
 	std::size_t received;
 	unsigned short r_port;
 	std::optional<sf::IpAddress> sender;
+	std::cout << "In rCheck" << std::endl;
 
-	if (u_socket.receive(str, 1, received, sender, r_port) != sf::Socket::Status::Done) {
-		//error
-		std::cout << "Error" << std::endl;
-	}
-	std::cout << "Check Answer: " << str[0] << std::endl;
-	if (str[0] == 'y') {
-		running = true;
-	}
-	else {
-		running = false;
-	}
+		if (check_socket.receive(str, 1, received, sender, r_port) != sf::Socket::Status::Done) {
+			//error
+
+			std::cout << "Error in AS rCheck" << std::endl;
+		}
+		
+		if (str[0] == 'y') {
+		
+			return 'y';
+			
+		}
+
+		
+	
+	
+	
 }
 
 

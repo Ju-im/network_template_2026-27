@@ -46,6 +46,10 @@ class Game
 	std::unique_ptr<Client> client;
 	std::thread server_thread;
 	std::thread client_thread;
+	bool connected = false;
+	bool as_started = false;
+	std::thread tcp_server_thread;
+	std::thread tcp_client_thread;
 	AudioStream audio_stream;
 	AudioStreamRecorder recorder;
 	sf::SoundBuffer buffer;
