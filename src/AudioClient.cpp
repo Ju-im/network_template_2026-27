@@ -65,7 +65,7 @@ void AudioClient::run() {
 }
 void AudioClient::play() {
 
-	if (samples.size() >= size*0.8 && !played) {
+	if (samples.size() >= size*0.5 && !played) {
 		sf::SoundBuffer buffer;
 		buffer.loadFromSamples(samples.data(), samples.size(), 2, 44100, recorder.getChannelMap());
 		sf::Sound sound(buffer);
