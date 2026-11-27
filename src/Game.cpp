@@ -21,7 +21,7 @@ bool Game::init()
    // audio_stream.init();
     recorder.start();
 
-    sf::sleep(sf::seconds(1));
+    sf::sleep(sf::seconds(2));
    
     recorder.stop();
 
@@ -129,7 +129,7 @@ void Game::mouseButtonPressed(const sf::Event::MouseButtonPressed* event)
            
         
             client_thread = std::thread([&] { ac->run(); });
-            client_thread.join();
+            client_thread.detach();
       
 
 

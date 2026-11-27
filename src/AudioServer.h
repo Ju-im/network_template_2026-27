@@ -10,7 +10,7 @@ class AudioServer
 {
 public:
 	void init(std::vector<std::int16_t>& data);
-	void run();
+
 
 	void listen(sf::TcpSocket& u_socket);
 	void relay(std::string buffer, sf::TcpSocket& u_socket);
@@ -18,7 +18,7 @@ public:
 
 	void input();
 	bool onGetData(int samplesToStream);
-	char rCheck();
+
 	std::size_t m_current_sample{};
 	std::vector<std::int16_t> samples;
 	private:
@@ -37,6 +37,10 @@ public:
 	int port = 53000;
 	bool running = true;
 	std::mutex mutex;
+	bool finished_sending = false;
+
+
+
 	enum class PacketType : std::uint8_t {
 		AUDIO =0,
 		END=1

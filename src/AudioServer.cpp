@@ -28,144 +28,92 @@ void AudioServer::init(std::vector<std::int16_t>& m_data) {
 
 }
 
-void AudioServer::run() {
 
-	char result = rCheck();
-	if (result == 'y') {
-		std::cout << "Finished" << std::endl;
-	}
-}
-void AudioServer::input() {
-	
-	/*std::thread run_thread([this] {run(); });
-	run_thread.detach();*/
+
+
+void AudioServer::input()
+{
 	std::cout << "In running" << std::endl;
-	while(running){
-		std::vector<std::int16_t> half_data;
-		std::lock_guard<std::mutex>lck(mutex);
-		const int samplesToStream = 100;
-		
-		
-		if (!onGetData(samplesToStream)) {
-			return;
+
+	std::lock_guard<std::mutex> lck(mutex);
+
+	const int samplesToStream = 1764;
+
+	while (running)
+	{
+		// Prepare the next chunk
+		if (!onGetData(samplesToStream))
+		{
+			// No samples left: tell the client transmission has finished
+			sf::Packet packet;
+			packet << PacketType::END;
+
+			if (u_socket.send(packet, sf::IpAddress::Broadcast, 53001)
+				!= sf::Socket::Status::Done)
+			{
+				std::cout << "Failed to send END packet" << std::endl;
+			}
+			else
+			{
+				std::cout << "END Packet sent" << std::endl;
+			}
+
+			running = false;
+			break;
 		}
 
+		// Send the prepared audio chunk
 		sf::Packet packet;
-
 		packet << PacketType::AUDIO;
 
-		for (std::int16_t sample : data.chunk_frame) {
+		for (std::int16_t sample : data.chunk_frame)
+		{
 			packet << sample;
 		}
-		if (u_socket.send(packet, sf::IpAddress::Broadcast, 53001) != sf::Socket::Status::Done)
+
+		if (u_socket.send(packet, sf::IpAddress::Broadcast, 53001)
+			!= sf::Socket::Status::Done)
 		{
-			// error...
-			
-			
-			
-
-		}
-		else {
-			
-			//std::cout << "Couldnt send" << std::endl;
-			std::cout << "Sent the data" << std::endl;
-			//data.samples = {};
+			std::cout << "Failed to send audio packet" << std::endl;
 			running = false;
-			
-
-
+			break;
 		}
-		running = true;
-		data.chunk_frame.clear();
+
+		std::cout << "Sent " << data.sampleCount << " samples" << std::endl;
+		sf::sleep(sf::milliseconds(20));
 	}
-	
-	
 }
 
 bool AudioServer::onGetData(int samplesToStream)
 {
-	data.samples = new std::int16_t();
+	// Clear the previous chunk
+	data.chunk_frame.clear();
 
-	if (m_current_sample + samplesToStream <= samples.size())
+	// Check whether we have reached the end
+	if (m_current_sample >= samples.size())
 	{
-		std::cout << "End not reached yet" << std::endl;
-		// end not reached: stream the samples and continue
-		for (int i = 0; i < samplesToStream;i++) {
-			std::int16_t d =samples[m_current_sample + i];
-			data.chunk_frame.push_back(d);
-			
-		}
-		data.sampleCount = samplesToStream;
-		m_current_sample += samplesToStream;
-		return true;
-		
-
-	}
-	else
-	{
-		std::cout << "End has been reached" << std::endl;
-		data.sampleCount = samples.size() - m_current_sample;
-		m_current_sample = samples.size();
-		for (int i = 0; i < data.sampleCount; i++) {
-			std::int16_t d = samples[samplesToStream+ i];
-			data.chunk_frame.push_back(d);
-
-		}
-		
-		// end of stream reached: stream the remaining samples and stop playback
-		if (u_socket.send(data.chunk_frame.data(), samplesToStream, sf::IpAddress::Broadcast, 53001) != sf::Socket::Status::Done)
-		{
-			// error...
-
-
-
-
-		}
-		else {
-
-			//std::cout << "Couldnt send" << std::endl;
-			std::cout << "Sent the data" << std::endl;
-			//data.samples = {};
-			sf::Packet packet;
-			packet << PacketType::END;
-
-			u_socket.send(packet, sf::IpAddress::Broadcast, 53001);
-			std::cout << "END Packet sent" << std::endl;
-
-
-		}
-		
-		/*std::thread check_thread([this] {rCheck(); });
-		check_thread.detach();*/
-		
 		return false;
 	}
+
+	// Calculate how many samples remain
+	int remaining = samples.size() - m_current_sample;
+
+	// Take either 100 samples or whatever remains
+	int samplesToCopy = std::min(samplesToStream, remaining);
+
+	for (int i = 0; i < samplesToCopy; i++)
+	{
+		std::int16_t d = samples[m_current_sample + i];
+		data.chunk_frame.push_back(d);
+	}
+
+	data.sampleCount = samplesToCopy;
+
+	// Move our position forward
+	m_current_sample += samplesToCopy;
+
+	return true;
 }
 
-
-char AudioServer::rCheck() {
-	char str[1];
-	std::size_t received;
-	unsigned short r_port;
-	std::optional<sf::IpAddress> sender;
-	std::cout << "In rCheck" << std::endl;
-
-		if (check_socket.receive(str, 1, received, sender, r_port) != sf::Socket::Status::Done) {
-			//error
-
-			std::cout << "Error in AS rCheck" << std::endl;
-		}
-		
-		if (str[0] == 'y') {
-		
-			return 'y';
-			
-		}
-
-		
-	
-	
-	
-}
 
 

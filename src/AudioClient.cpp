@@ -1,6 +1,7 @@
 #include "AudioClient.h"
 
 void AudioClient::connect() {
+	recorder.setChannelCount(2);
 	if(socket==nullptr){ socket = std::make_unique<sf::UdpSocket>(); }
 	if (check_socket == nullptr) { check_socket = std::make_unique<sf::UdpSocket>(); }
 	
@@ -37,7 +38,8 @@ void AudioClient::run() {
 
 
 	while(running){
-		std::array<std::int16_t, 100> buffer;
+	
+	
 		sf::Packet packet;
 
 		if (socket->receive(packet, sender, r_port)
@@ -59,7 +61,9 @@ void AudioClient::run() {
 			}
 			else if (type == PacketType::END) {
 				// Play the completed recording
+				
 				play();
+			
 			}
 		}
 		sf::sleep(sf::milliseconds(1));
@@ -69,33 +73,32 @@ void AudioClient::run() {
 
 
 }
-void AudioClient::play() {
-		buffer.loadFromSamples(samples.data(), samples.size(), 2, 44100, recorder.getChannelMap());
-		sound = new sf::Sound(buffer);
-		
-		
-		
-		sound->play();
+void AudioClient::play()
+{
+	std::cout << "1. Starting playback function\n";
 
-	
-		played = true;
+	std::cout << "2. Loading buffer\n";
 
+	if (!buffer.loadFromSamples(
+		samples.data(),
+		samples.size(),
+		2,
+		44100,
+		recorder.getChannelMap()))
+	{
+		std::cout << "Failed to load audio\n";
+		return;
 	}
-	
 
+	std::cout << "3. Buffer loaded\n";
 
-void AudioClient::sendCheck() {
-	
-	std::string str;
-	sf::IpAddress receiver(sender.value());
-	
-		if (recieved) {
-			str = 'y';
-			std::cout << "Sending Check and we did recieve it " << std::endl;
-			check_socket->send(reinterpret_cast<char*>(str.data()), str.length(), sf::IpAddress::Broadcast, 53003);
-		}
-	
-	
-	
+	sound = new sf::Sound(buffer);
 
+	std::cout << "4. Sound created\n";
+
+	sound->play();
+
+	std::cout << "5. Playback started\n";
 }
+
+
