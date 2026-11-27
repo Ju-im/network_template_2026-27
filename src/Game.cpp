@@ -129,7 +129,7 @@ void Game::mouseButtonPressed(const sf::Event::MouseButtonPressed* event)
            
         
             client_thread = std::thread([&] { ac->run(); });
-            client_thread.detach();
+            client_thread.join();
       
 
 

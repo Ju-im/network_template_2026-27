@@ -20,9 +20,7 @@ void AudioServer::init(std::vector<std::int16_t>& m_data) {
 	for (std::int16_t samp : m_data) {
 		samples.push_back(samp);
 	}
-	for (int i = 0; i < 101; i++) {
-		samples[i] = 100-i;
-	}
+	
 
 
 	m_current_sample = 0;
@@ -47,12 +45,19 @@ void AudioServer::input() {
 		std::lock_guard<std::mutex>lck(mutex);
 		const int samplesToStream = 100;
 		
+		
 		if (!onGetData(samplesToStream)) {
 			return;
 		}
 
-		
-		if (u_socket.send(data.chunk_frame.data(), data.chunk_frame.size(), sf::IpAddress::Broadcast, 53001) != sf::Socket::Status::Done)
+		sf::Packet packet;
+
+		packet << PacketType::AUDIO;
+
+		for (std::int16_t sample : data.chunk_frame) {
+			packet << sample;
+		}
+		if (u_socket.send(packet, sf::IpAddress::Broadcast, 53001) != sf::Socket::Status::Done)
 		{
 			// error...
 			
@@ -86,7 +91,7 @@ bool AudioServer::onGetData(int samplesToStream)
 		std::cout << "End not reached yet" << std::endl;
 		// end not reached: stream the samples and continue
 		for (int i = 0; i < samplesToStream;i++) {
-			std::int16_t d =samples[m_current_sample];
+			std::int16_t d =samples[m_current_sample + i];
 			data.chunk_frame.push_back(d);
 			
 		}
@@ -102,10 +107,11 @@ bool AudioServer::onGetData(int samplesToStream)
 		data.sampleCount = samples.size() - m_current_sample;
 		m_current_sample = samples.size();
 		for (int i = 0; i < data.sampleCount; i++) {
-			std::int16_t d = samples[i];
+			std::int16_t d = samples[samplesToStream+ i];
 			data.chunk_frame.push_back(d);
 
 		}
+		
 		// end of stream reached: stream the remaining samples and stop playback
 		if (u_socket.send(data.chunk_frame.data(), samplesToStream, sf::IpAddress::Broadcast, 53001) != sf::Socket::Status::Done)
 		{
@@ -120,10 +126,15 @@ bool AudioServer::onGetData(int samplesToStream)
 			//std::cout << "Couldnt send" << std::endl;
 			std::cout << "Sent the data" << std::endl;
 			//data.samples = {};
+			sf::Packet packet;
+			packet << PacketType::END;
+
+			u_socket.send(packet, sf::IpAddress::Broadcast, 53001);
+			std::cout << "END Packet sent" << std::endl;
 
 
 		}
-
+		
 		/*std::thread check_thread([this] {rCheck(); });
 		check_thread.detach();*/
 		

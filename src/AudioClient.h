@@ -30,4 +30,25 @@ private:
 	unsigned short r_port;
 	std::optional<sf::IpAddress> sender;
 	AudioStreamRecorder recorder;
+	sf::SoundBuffer buffer;
+	sf::Sound* sound;
+	enum class PacketType : std::uint8_t {
+		AUDIO,
+		END
+	};
+
+
+
+	friend sf::Packet& operator<<(sf::Packet& packet, const PacketType& type)
+	{
+		return packet << static_cast<std::uint8_t>(type);
+	}
+
+	friend sf::Packet& operator>>(sf::Packet& packet, PacketType& type)
+	{
+		std::uint8_t value;
+		packet >> value;
+		type = static_cast<PacketType>(value);
+		return packet;
+	}
 };

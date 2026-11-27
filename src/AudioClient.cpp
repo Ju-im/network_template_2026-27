@@ -22,9 +22,8 @@ void AudioClient::connect() {
 		std::cout << "We binded" << std::endl;
 		std::cout << check_socket->getLocalPort() << std::endl;
 	}
+	socket->setBlocking(false);
 
-
-	//socket.setBlocking(false);
 }
 
 
@@ -34,29 +33,36 @@ void AudioClient::run() {
 	
 	
 	std::cout << "In Client running state" << std::endl;
-	std::array<std::int16_t, 100> buffer;
+	
+
 
 	while(running){
-		if (socket->receive(buffer.data(), buffer.size(), received, sender, r_port) != sf::Socket::Status::Done)
-		{
-			// error...
+		std::array<std::int16_t, 100> buffer;
+		sf::Packet packet;
 
+		if (socket->receive(packet, sender, r_port)
+			== sf::Socket::Status::Done) {
 
-			recieved = false;
+			PacketType type;
+			packet >> type;
 
+			if (type == PacketType::AUDIO) {
+				// Extract audio samples
 
-			
+				std::int16_t sample;
+
+				while (packet >> sample)
+				{
+					samples.push_back(sample);
+				}
+				std::cout << "Sample size: " << samples.size() <<std::endl;
+			}
+			else if (type == PacketType::END) {
+				// Play the completed recording
+				play();
+			}
 		}
-		else {
-			std::cout << " bytes from " << sender.value().toString() << " on port " << r_port << "Recieved: " << received << std::endl;
-			recieved = true;
-
-
-			samples.insert(samples.end(), buffer.begin(), buffer.end());
-			std::cout << "Current sample size: " << samples.size();
-			//sendCheck();
-			play();
-		}
+		sf::sleep(sf::milliseconds(1));
 	}
 		
 
@@ -64,25 +70,18 @@ void AudioClient::run() {
 
 }
 void AudioClient::play() {
-
-	if (samples.size() >= size*0.5 && !played) {
-		sf::SoundBuffer buffer;
 		buffer.loadFromSamples(samples.data(), samples.size(), 2, 44100, recorder.getChannelMap());
-		sf::Sound sound(buffer);
-		sound.play();
+		sound = new sf::Sound(buffer);
+		
+		
+		
+		sound->play();
 
-		while (sound.getStatus() == sf::Sound::Status::Playing) {
-			std::cout << "Time offset: " << sound.getPlayingOffset().asSeconds() << std::endl;
-			sf::sleep(sf::milliseconds(100));
-
-		}
+	
 		played = true;
 
 	}
-	else {
-		std::cout << "Not big enough" << std::endl;
-	}
-}
+	
 
 
 void AudioClient::sendCheck() {
