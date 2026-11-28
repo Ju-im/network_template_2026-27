@@ -39,77 +39,67 @@ void AudioServer::init(std::vector<std::int16_t>& m_data) {
 
 void AudioServer::input()
 {
-	std::cout << "In running" << std::endl;
+    std::cout << "In running" << std::endl;
 
-	std::lock_guard<std::mutex> lck(mutex);
+    while (running)
+    {
+        std::vector<std::int16_t> chunk;
 
-	const int samplesToStream = 1764;
+        // Check whether the recorder has another chunk ready
+        if (recorder.getNextChunk(chunk))
+        {
+            sf::Packet packet;
+            packet << PacketType::AUDIO;
 
-	while (running)
-	{
-		// Prepare the next chunk
-		std::vector<std::int16_t> chunk;
+            for (std::int16_t sample : chunk)
+            {
+                packet << sample;
+            }
 
-		if (recorder.getNextChunk(chunk))
-		{
-			// Send the prepared audio chunk
-			sf::Packet packet;
-			packet << PacketType::AUDIO;
+            if (u_socket.send(packet, sf::IpAddress::Broadcast, 53001)
+                != sf::Socket::Status::Done)
+            {
+                std::cout << "Failed to send audio packet" << std::endl;
+                running = false;
+                break;
+            }
 
-			for (std::int16_t sample : chunk)
-			{
-				packet << sample;
-			}
+            std::cout << "Sent " << chunk.size() << " samples" << std::endl;
+            
+        }
+        else
+        {
+            // No chunk available yet.
+            // Only send END when recording has actually stopped.
+            if (recordingFinished)
+            {
+                sf::Packet packet;
+                packet << PacketType::END;
 
-			if (u_socket.send(packet, sf::IpAddress::Broadcast, 53001)
-				!= sf::Socket::Status::Done)
-			{
-				std::cout << "Failed to send audio packet" << std::endl;
-				running = false;
-				break;
-			}
-		}
-		if (!onGetData(samplesToStream))
-		{
-			// No samples left: tell the client transmission has finished
-			sf::Packet packet;
-			packet << PacketType::END;
+                if (u_socket.send(packet, sf::IpAddress::Broadcast, 53001)
+                    != sf::Socket::Status::Done)
+                {
+                    std::cout << "Failed to send END packet" << std::endl;
+                }
+                else
+                {
+                    std::cout << "END Packet sent" << std::endl;
+                }
 
-			if (u_socket.send(packet, sf::IpAddress::Broadcast, 53001)
-				!= sf::Socket::Status::Done)
-			{
-				std::cout << "Failed to send END packet" << std::endl;
-			}
-			else
-			{
-				std::cout << "END Packet sent" << std::endl;
-			}
+                running = false;
+                break;
+            }
 
-			running = false;
-			break;
-		}
-
-		// Send the prepared audio chunk
-		sf::Packet packet;
-		packet << PacketType::AUDIO;
-
-		for (std::int16_t sample : data.chunk_frame)
-		{
-			packet << sample;
-		}
-
-		if (u_socket.send(packet, sf::IpAddress::Broadcast, 53001)
-			!= sf::Socket::Status::Done)
-		{
-			std::cout << "Failed to send audio packet" << std::endl;
-			running = false;
-			break;
-		}
-
-		std::cout << "Sent " << data.sampleCount << " samples" << std::endl;
-		sf::sleep(sf::milliseconds(20));
-	}
+            // Avoid busy-waiting while waiting for another chunk
+            sf::sleep(sf::milliseconds(1));
+        }
+    }
 }
+
+
+
+
+
 
 bool AudioServer::onGetData(int samplesToStream)
 {

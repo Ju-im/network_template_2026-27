@@ -151,6 +151,10 @@ void Game::keyPressed(const sf::Event::KeyPressed* event)
 
 void Game::keyReleased(const sf::Event::KeyReleased* event)
 {
+    if (event->scancode == sf::Keyboard::Scancode::W)
+    {
+        as->recordingFinished = true;
+    }
 
 }
 

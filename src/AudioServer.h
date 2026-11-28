@@ -20,7 +20,7 @@ public:
 
 	void input();
 	bool onGetData(int samplesToStream);
-
+	std::atomic<bool> recordingFinished = false;
 	std::size_t m_current_sample{};
 	std::vector<std::int16_t> samples;
 	private:
@@ -29,6 +29,7 @@ public:
 		sf::UdpSocket u_socket;
 	std::vector<std::thread> workers;
 	std::vector<std::unique_ptr<sf::UdpSocket>>connecetions;
+	
 	struct Chunk
 	{
 		const std::int16_t* samples{};     //!< Pointer to the audio samples

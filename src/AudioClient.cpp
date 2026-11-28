@@ -51,6 +51,8 @@ void AudioClient::run() {
 			if (type == PacketType::AUDIO) {
 				// Extract audio samples
 
+				std::vector<std::int16_t> samples;
+
 				std::int16_t sample;
 
 				while (packet >> sample)
@@ -58,11 +60,12 @@ void AudioClient::run() {
 					samples.push_back(sample);
 				}
 				std::cout << "Sample size: " << samples.size() <<std::endl;
+				play(samples);
 			}
 			else if (type == PacketType::END) {
 				// Play the completed recording
-				
-				play();
+				recorder.stop();
+				std::cout << "Finished transmission" << std::endl;
 			
 			}
 		}
@@ -73,32 +76,17 @@ void AudioClient::run() {
 
 
 }
-void AudioClient::play()
+void AudioClient::play(const std::vector<std::int16_t>& samples)
 {
-	std::cout << "1. Starting playback function\n";
-
-	std::cout << "2. Loading buffer\n";
-
-	if (!buffer.loadFromSamples(
+	buffer.loadFromSamples(
 		samples.data(),
 		samples.size(),
 		2,
-		44100,
-		recorder.getChannelMap()))
-	{
-		std::cout << "Failed to load audio\n";
-		return;
-	}
+		44100,recorder.getChannelMap()
+	);
 
-	std::cout << "3. Buffer loaded\n";
-
-	sound = new sf::Sound(buffer);
-
-	std::cout << "4. Sound created\n";
-
+	sound = std::make_unique<sf::Sound>(buffer);
 	sound->play();
-
-	std::cout << "5. Playback started\n";
 }
 
 
