@@ -10,12 +10,13 @@
 class AudioStreamRecorder:public sf::SoundRecorder
 {
 public:
-	std::vector<std::int16_t*>m_samples;
+	bool getNextChunk(std::vector<std::int16_t>& chunk);
+
+	std::queue<std::vector<std::int16_t>> m_samples;
 	std::vector<std::size_t> m_sampleCount;
 	std::vector<std::int16_t>flat_samples;
 	bool push_to_talk = true;
-	std::vector<std::int16_t> buffer;
-	std::queue<std::vector<std::int16_t*>> outgoing_queue;
+	std::mutex m_mutex;
 
 
 

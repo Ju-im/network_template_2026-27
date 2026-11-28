@@ -1,5 +1,11 @@
 #include "AudioServer.h"
 
+AudioServer::AudioServer(AudioStreamRecorder& m_recorder):recorder(m_recorder)
+{
+	
+
+}
+
 void AudioServer::init(std::vector<std::int16_t>& m_data) {
 
 	if (u_socket.bind(53000) != sf::Socket::Status::Done) {
@@ -42,6 +48,27 @@ void AudioServer::input()
 	while (running)
 	{
 		// Prepare the next chunk
+		std::vector<std::int16_t> chunk;
+
+		if (recorder.getNextChunk(chunk))
+		{
+			// Send the prepared audio chunk
+			sf::Packet packet;
+			packet << PacketType::AUDIO;
+
+			for (std::int16_t sample : chunk)
+			{
+				packet << sample;
+			}
+
+			if (u_socket.send(packet, sf::IpAddress::Broadcast, 53001)
+				!= sf::Socket::Status::Done)
+			{
+				std::cout << "Failed to send audio packet" << std::endl;
+				running = false;
+				break;
+			}
+		}
 		if (!onGetData(samplesToStream))
 		{
 			// No samples left: tell the client transmission has finished

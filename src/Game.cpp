@@ -19,32 +19,20 @@ bool Game::init()
     board->init();   
    
    // audio_stream.init();
-    recorder.start();
+    recorder.start(44100);
 
-    sf::sleep(sf::seconds(2));
+    //sf::sleep(sf::seconds(2));
    
-    recorder.stop();
+    //recorder.stop();
 
-    
-  
-    std::vector<std::int16_t*> samples = recorder.outgoing_queue.front();
-    //std::vector<std::int16_t*> samples;
-    
-    sf::SoundBuffer m_buffer;
-    std::vector<std::int16_t> flatSample;
-  
+
    
        
        
     
-    std::cout << "Initial size: " << recorder.flat_samples.size() << std::endl;
-    m_buffer.loadFromSamples(recorder.flat_samples.data(), recorder.flat_samples.size(), recorder.getChannelCount(), 44100, recorder.getChannelMap());
-    std::cout << "Duration: " << m_buffer.getDuration().asSeconds() << std::endl;
-    buffer = m_buffer;
-     sf::Sound sound(buffer);
+
             
-        
-           // sound.setLooping(true);
+      
      
           
         
@@ -70,7 +58,7 @@ bool Game::init()
 void Game::update(float dt)
 {
     if (connected && !as_started) {
-        as = std::make_unique<AudioServer>();
+        as = std::make_unique<AudioServer>(recorder);
         as->init(recorder.flat_samples);
 
         server_thread = std::thread([&] {   as->input(); });
@@ -107,7 +95,7 @@ void Game::mouseButtonPressed(const sf::Event::MouseButtonPressed* event)
             tcp_server_thread = std::thread([&] { server->run(connected); });
             tcp_server_thread.detach();
            
-            
+          
           
         }
         else if (join_text.getGlobalBounds().contains(mousePos)) {
@@ -130,6 +118,12 @@ void Game::mouseButtonPressed(const sf::Event::MouseButtonPressed* event)
         
             client_thread = std::thread([&] { ac->run(); });
             client_thread.detach();
+            std::vector<std::int16_t> chunk;
+
+            if (recorder.getNextChunk(chunk))
+            {
+                std::cout << "Retrieved: " << chunk.size() << " samples\n";
+            }
       
 
 

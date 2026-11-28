@@ -39,7 +39,7 @@ void AudioClient::run() {
 
 	while(running){
 	
-	
+
 		sf::Packet packet;
 
 		if (socket->receive(packet, sender, r_port)

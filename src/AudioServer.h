@@ -6,9 +6,11 @@
 #include <iostream>
 #include<mutex>
 #include <memory>
+#include "AudioStreamRecorder.h"
 class AudioServer
 {
 public:
+	AudioServer(AudioStreamRecorder& m_recorder);
 	void init(std::vector<std::int16_t>& data);
 
 
@@ -22,6 +24,7 @@ public:
 	std::size_t m_current_sample{};
 	std::vector<std::int16_t> samples;
 	private:
+		AudioStreamRecorder& recorder;
 		sf::UdpSocket check_socket;
 		sf::UdpSocket u_socket;
 	std::vector<std::thread> workers;
